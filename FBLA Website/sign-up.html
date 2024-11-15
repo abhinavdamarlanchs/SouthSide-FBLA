@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Document</title>
+</head>
+
+<body>
+  <div>
+    <nav id="nav">
+      <div id="logo_img" class="nav__header">
+        <div class="nav__logo">
+          <a href="index.html" class="logo">South<span>side</span></a>
+        </div>
+        <div class="nav__menu__btn" id="menu-btn">
+          <i class="ri-menu-line"></i>
+        </div>
+      </div>
+      <ul class="nav__links" id="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="apply.html">Apply</a></li>
+        <li><a href="posts.html">Post</a></li>
+        <li id="auth-btn" id="sign_up_btn"><a style="color: #FF7C02" id="auth-link" href="sign-up.html">Sign Up</a></li>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrapper">
+    <div class="form-box">
+
+      <!------------------- login form -------------------------->
+
+      <div class="login-container" id="login">
+        <div class="top">
+          <span>Don't have an account? <a href="#" onclick="register()">Sign Up</a></span>
+          <header>Login</header>
+        </div>
+        <div class="input-box">
+          <input type="text" class="input-field" placeholder="Username or Email">
+          <i class="bx bx-user"></i>
+        </div>
+        <div class="input-box">
+          <input type="password" class="input-field" placeholder="Password">
+          <i class="bx bx-lock-alt"></i>
+        </div>
+        <div class="input-box">
+          <input type="submit" class="submit" value="Sign In">
+        </div>
+        <div class="two-col">
+          <div class="one">
+            <input type="checkbox" id="login-check">
+            <label for="login-check"> Remember Me</label>
+          </div>
+        </div>
+      </div>
+
+      <!------------------- registration form -------------------------->
+      <div class="register-container" id="register">
+        <div class="top">
+          <span>Have an account? <a href="#" onclick="login()">Login</a></span>
+          <header>Sign Up</header>
+        </div>
+        <div class="two-forms">
+          <div class="input-box">
+            <input type="text" class="input-field" placeholder="Firstname">
+            <i class="bx bx-user"></i>
+          </div>
+          <div class="input-box">
+            <input type="text" class="input-field" placeholder="Lastname">
+            <i class="bx bx-user"></i>
+          </div>
+        </div>
+        <div class="input-box">
+          <input type="text" class="input-field" placeholder="Email">
+          <i class="bx bx-envelope"></i>
+        </div>
+        <div class="input-box">
+          <input type="password" class="input-field" placeholder="Password">
+          <i class="bx bx-lock-alt"></i>
+        </div>
+        <div class="input-box">
+          <input type="submit" class="submit" value="Register">
+        </div>
+        <div class="two-col">
+          <div class="one">
+            <input type="checkbox" id="register-check">
+            <label for="register-check"> Remember Me</label>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+
+  <script type="module">
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxxTORtlUznQwvqI9bF6jznVwPQUAyqzc",
+      authDomain: "fbla-project-f06d6.firebaseapp.com",
+      databaseURL: "https://fbla-project-f06d6-default-rtdb.firebaseio.com",
+      projectId: "fbla-project-f06d6",
+      storageBucket: "fbla-project-f06d6.appspot.com",
+      messagingSenderId: "784434479966",
+      appId: "1:784434479966:web:158ddb64e9206a4434c5cf",
+      measurementId: "G-X4H5PQLFJD"
+    };
+
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Function to handle sign-up form submission
+    function handleSignUp(event) {
+      event.preventDefault(); // Prevent form from submitting the default way
+
+      // Capture form data
+      const firstName = document.querySelector('#register input[placeholder="Firstname"]').value;
+      const lastName = document.querySelector('#register input[placeholder="Lastname"]').value;
+      const email = document.querySelector('#register input[placeholder="Email"]').value;
+      const password = document.querySelector('#register input[placeholder="Password"]').value;
+
+      // Validate that fields are filled
+      if (!firstName || !lastName || !email || !password) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      // Data structure for the user
+      const userData = {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: password
+      };
+
+      // Push data to Firebase under "users" node
+      const newUserRef = push(ref(database, 'users'));
+      set(newUserRef, userData)
+        .then(() => {
+          alert('User registered successfully!');
+          login() // Reset form after submission
+        })
+        .catch((error) => {
+          alert('Error registering user: ' + error.message);
+        });
+    }
+
+    // Add event listener to the sign-up button
+    document.querySelector('#register .submit').addEventListener('click', handleSignUp);
+
+    import { get, child } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    // Function to handle login form submission
+    async function handleLogin(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Capture form data
+      const email = document.querySelector('#login input[placeholder="Username or Email"]').value;
+      const password = document.querySelector('#login input[placeholder="Password"]').value;
+
+      if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+      }
+
+      // Reference to the 'users' node in Firebase
+      const usersRef = ref(database, 'users');
+
+      try {
+        const snapshot = await get(usersRef);
+        if (snapshot.exists()) {
+          let userFound = false;
+          snapshot.forEach((childSnapshot) => {
+            const userData = childSnapshot.val();
+            // Check if email and password match
+            if (userData.email === email && userData.password === password) {
+              userFound = true;
+              // Store user info locally (could also use session storage for temporary storage)
+              localStorage.setItem("userName", `${userData.firstName} ${userData.lastName.charAt(0)}`);
+              // Redirect to the homepage
+              window.location.href = "index.html";
+            }
+          });
+          if (!userFound) {
+            alert("Invalid email or password.");
+          }
+        } else {
+          alert("No users found in the database.");
+        }
+      } catch (error) {
+        alert('Error logging in: ' + error.message);
+      }
+    }
+
+    // Add event listener to the login button
+    document.querySelector('#login .submit').addEventListener('click', handleLogin);
+
+
+  </script>
+
+  <script>
+    function myMenuFunction() {
+      var i = document.getElementById("navMenu");
+
+      if (i.className === "nav-menu") {
+        i.className += " responsive";
+      } else {
+        i.className = "nav-menu";
+      }
+    }
+
+    var a = document.getElementById("loginBtn");
+    var b = document.getElementById("registerBtn");
+    var x = document.getElementById("login");
+    var y = document.getElementById("register");
+
+    function login() {
+      x.style.left = "4px";
+      y.style.right = "-520px";
+      a.className += " white-btn";
+      b.className = "btn";
+      x.style.opacity = 1;
+      y.style.opacity = 0;
+    }
+
+    function register() {
+      x.style.left = "-510px";
+      y.style.right = "5px";
+      a.className = "btn";
+      b.className += " white-btn";
+      x.style.opacity = 0;
+      y.style.opacity = 1;
+    }
+
+  </script>
+  <script src="https://unpkg.com/scrollreveal"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="main.js"></script>
+
+
+</body>
+
+</html>

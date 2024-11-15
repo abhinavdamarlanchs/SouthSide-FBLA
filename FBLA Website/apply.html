@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Document</title>
+</head>
+
+<body>
+  <nav id="nav">
+    <div id="logo_img" class="nav__header">
+      <div class="nav__logo">
+        <a href="index.html" class="logo">South<span>side</span></a>
+      </div>
+      <div class="nav__menu__btn" id="menu-btn">
+        <i class="ri-menu-line"></i>
+      </div>
+    </div>
+    <ul class="nav__links" id="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="apply.html">Apply</a></li>
+      <li><a href="posts.html">Post</a></li>
+      <li id="auth-btn" id="sign_up_btn"><a style="color: #FF7C02" id="auth-link" href="sign-up.html">Sign Up</a></li>
+    </ul>
+  </nav>
+  <div>
+    <h1 id="job_list_header">Find the <span>Job</span> for you</h1>
+    <div class="search-bar">
+      <input style="border-radius: 15px; font-family: Poppins; font-size: 15px; color: black; font-weight: bold;"
+        type="text" id="searchInput" placeholder="Job Title, Keywords, Company" onkeyup="filterJobs()" />
+    </div>
+    <div class="job-container">
+      <div class="job-list">
+        <!-- Job items will be populated here dynamically -->
+      </div>
+      <div class="job-details">
+        <h2>Job Details</h2>
+        <p id="job-title">Select a job to view details</p>
+        <p id="job-description"></p>
+        <p id="job-type"></p>
+        <p id="job-salary"></p>
+        <!-- Apply Button (Initially hidden) -->
+        <button id="apply-btn">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+
+  <script type="module">
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxxTORtlUznQwvqI9bF6jznVwPQUAyqzc",
+      authDomain: "fbla-project-f06d6.firebaseapp.com",
+      databaseURL: "https://fbla-project-f06d6-default-rtdb.firebaseio.com",
+      projectId: "fbla-project-f06d6",
+      storageBucket: "fbla-project-f06d6.appspot.com",
+      messagingSenderId: "784434479966",
+      appId: "1:784434479966:web:158ddb64e9206a4434c5cf",
+      measurementId: "G-X4H5PQLFJD"
+    };
+
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Function to display jobs from the database
+    function displayJobs() {
+      const jobList = document.querySelector('.job-list');
+      const jobsRef = ref(database, 'jobs');
+
+      // Listen for changes in the "jobs" node of the database
+      onValue(jobsRef, (snapshot) => {
+        jobList.innerHTML = ''; // Clear the list before updating
+
+        // Loop through each job in the snapshot
+        snapshot.forEach((childSnapshot) => {
+          const job = childSnapshot.val();
+
+          // Create job-item div for each job
+          const jobItem = document.createElement('div');
+          jobItem.classList.add('job-item');
+          jobItem.onclick = () => showJobDetails(job.title, childSnapshot.key); // Pass job title and key
+
+          jobItem.innerHTML = `
+        <h3>${job.title}</h3>
+        <p>Company: ${job.company}</p>
+        <p>Location: ${job.location}</p>
+        <p>Job Type: ${job.type}</p>
+        <p>Salary: ${job.salary}</p>
+      `;
+
+          // Append job item to the job list container
+          jobList.appendChild(jobItem);
+        });
+      });
+    }
+
+    // Function to show job details and display the Apply button
+    function showJobDetails(title, jobId) {
+      const jobsRef = ref(database, 'jobs');
+      onValue(jobsRef, (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const job = childSnapshot.val();
+          if (job.title === title) {
+            document.getElementById('job-title').innerText = job.title;
+            document.getElementById('job-description').innerText = job.description;
+            document.getElementById('job-type').innerText = job.type;
+            document.getElementById('job-salary').innerText = job.salary;
+
+            // Show the Apply button when job details are displayed
+            const applyBtn = document.getElementById('apply-btn');
+            applyBtn.style.display = 'inline-block'; // Show the Apply button
+            applyBtn.onclick = () => applyForJob(jobId); // Call applyForJob function when clicked
+          }
+        });
+      });
+    }
+
+    // Function to handle job application
+    function applyForJob(jobId) {
+      const userName = localStorage.getItem('userName');
+      if (!userName) {
+        alert("You must be logged in to apply!");
+        return;
+      }
+
+      const applicationsRef = ref(database, `jobs/${jobId}/applications`); // Reference to the applications node for the job
+
+      // Push the new application to the "applications" node
+      const newApplicationRef = push(applicationsRef); // Create a new index for each application
+      set(newApplicationRef, {
+        userName: userName
+      })
+        .then(() => {
+          alert('Your application has been submitted!');
+        })
+        .catch((error) => {
+          alert('Error submitting application: ' + error.message);
+        });
+    }
+
+    // Call displayJobs to load jobs on page load
+    displayJobs();
+
+    // Form submission event
+    document.getElementById('jobForm').addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent form from submitting the default way
+
+      // Capture form data
+      const jobData = {
+        title: document.getElementById('title').value,
+        company: document.getElementById('company').value,
+        location: document.getElementById('location').value,
+        type: document.getElementById('type').value,
+        salary: document.getElementById('salary').value,
+        description: document.getElementById('description').value
+      };
+
+      // Push data to Firebase Realtime Database
+      const newJobRef = push(ref(database, 'jobs')); // Push a new job entry
+      set(newJobRef, jobData) // Save the job data to Firebase
+        .then(() => {
+          alert('Job posted successfully!');
+          document.getElementById('jobForm').reset(); // Reset form after submission
+        })
+        .catch((error) => {
+          alert('Error posting job: ' + error.message);
+        });
+    });
+
+  </script>
+  <script src="https://unpkg.com/scrollreveal"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>
